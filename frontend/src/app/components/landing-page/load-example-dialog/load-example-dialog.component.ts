@@ -172,7 +172,7 @@ export class LoadExampleDialogComponent {
                                             new Condition(""),
                                             new Condition(""),
                                             [
-                                                new Condition(""),
+                                                new Condition("A[wt] = 0"),
                                                 new Condition("A[wt] = 1"),
                                                 new Condition("A[wt] = 2"),
                                             ],
@@ -291,7 +291,7 @@ export class LoadExampleDialogComponent {
                                             new Condition(""),
                                             new Condition(""),
                                             new Condition("max(A, 0, j+1, i)"),
-                                            new SelectionStatement(
+                                            new SelectionStatement( //post condition kommt von child postcondition
                                                 "Selection",
                                                 new Condition(""),
                                                 new Condition(""),
