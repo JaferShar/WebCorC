@@ -37,16 +37,15 @@ import {
   NodePositionChange,
   VflowComponent,
 } from "ngx-vflow";
-import { EditorSidemenuComponent } from "./editor-sidemenu/editor-sidemenu.component";
-import { EditorBottommenuComponent } from "./editor-bottommenu/editor-bottommenu.component";
-import { GlobalSettingsService } from "../../services/global-settings.service";
-import { fromEvent } from "rxjs";
-import { Button } from "primeng/button";
-import { Popover } from "primeng/popover";
-import { ConditionSelectorComponent } from "./condition/condition-selector/condition-selector.component";
-import { ICondition } from "../../types/condition/condition";
-import { disconnectNodes } from "../../types/statements/nodes/statement-node-utils";
-
+import {EditorSidemenuComponent} from "./editor-sidemenu/editor-sidemenu.component";
+import {EditorBottommenuComponent} from "./editor-bottommenu/editor-bottommenu.component";
+import {GlobalSettingsService} from "../../services/global-settings.service";
+import {fromEvent} from "rxjs";
+import {Button} from "primeng/button";
+import {Popover} from "primeng/popover";
+import {ConditionSelectorComponent} from "./condition/condition-selector/condition-selector.component";
+import {ICondition} from "../../types/condition/condition";
+import {disconnectNodes} from "../../types/statements/nodes/statement-node-utils";
 export const RED_COLOURED_CONDITIONS = new InjectionToken<ICondition[]>(
   "RedColouredConditions",
 );
@@ -452,6 +451,39 @@ export class EditorComponent implements AfterViewInit, OnDestroy {
       });
     });
 
-    this.treeService.refreshNodes();
-  }
+        this.treeService.refreshNodes();
+    }
+
+    private getNodesFromEdge(edgeChange: { id: string }) {
+        const parentId = this.edges.find(
+            (edge) => edge.id == edgeChange.id,
+        )!.source;
+        const childId = this.edges.find((edge) => edge.id == edgeChange.id)!.target;
+        const parent = this.nodes.find(
+            (node) => node.id == parentId,
+        )! as HtmlTemplateDynamicNode<AbstractStatementNode>;
+        const child = this.nodes.find(
+            (node) => node.id == childId,
+        )! as HtmlTemplateDynamicNode<AbstractStatementNode>;
+        return {parent, child};
+    }
+
+    protected onTabOpen($event: boolean) {
+        this.showResetButton = !$event;
+    }
+
+    protected resetNodePosition() {
+        switch (this.globalSettingsService.resetVariant()){
+            case ResetVariant.ReingoldTilford:
+                this.resetNodePositionsRT();
+                break;
+            case ResetVariant.Stacked:
+                this.resetNodePositionsStacked();
+                break;
+            default:
+                this.resetNodePositionsRT();
+                break;
+
+        }
+    }
 }
