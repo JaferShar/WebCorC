@@ -150,11 +150,11 @@ export class LoadExampleDialogComponent {
                             new RootStatement(
                                 "Root",
                                 new Condition("s(A, 0, 0, A.length)"),
-                                new Condition("s(A, wb, wt, bb) & wt = bb"),
+                                new Condition(""),
                                 new CompositionStatement(
                                     "Comp",
                                     new Condition("s(A, 0, 0, A.length)"),
-                                    new Condition("s(A, wb, wt, bb) & wt = bb"),
+                                    new Condition(""),
                                     new Condition("s(A, wb, wt, bb)"),
                                     new Statement(
                                         "Statement2",
@@ -166,7 +166,7 @@ export class LoadExampleDialogComponent {
                                     new RepetitionStatement(
                                         "Repetition",
                                         new Condition(""),
-                                        new Condition(""),
+                                        new Condition("asd"),
                                         new SelectionStatement(
                                             "Selection",
                                             new Condition(""),
@@ -180,21 +180,21 @@ export class LoadExampleDialogComponent {
                                                 new Statement(
                                                     "Statement3",
                                                     new Condition(""),
-                                                    new Condition(""),
+                                                    new Condition("s(A, wb, wt, bb)"),
                                                     "t = A[wt]; A[wt] = A[wb]; A[wb] = t; wt = wt+1; wb = wb+1;",
                                                     new Position(0, 1800)
                                                 ),
                                                 new Statement(
                                                     "Statement4",
                                                     new Condition(""),
-                                                    new Condition(""),
+                                                    new Condition("s(A, wb, wt, bb)"),
                                                     "wt = wt+1;",
                                                     new Position(800, 1800)
                                                 ),
                                                 new Statement(
                                                     "Statement5",
                                                     new Condition(""),
-                                                    new Condition(""),
+                                                    new Condition("s(A, wb, wt, bb)"),
                                                     "t = A[wt]; A[wt] = A[bb-1]; A[bb-1] = t; bb = bb-1;",
                                                     new Position(1600, 1800)
                                                 ),
@@ -303,18 +303,19 @@ export class LoadExampleDialogComponent {
                                                     new Statement(
                                                         "Statement3",
                                                         new Condition(""),
-                                                        new Condition(""),
+                                                        new Condition("max(A, 0, j+1, i)"),
                                                         "i = j;",
                                                         new Position(0, 2000)
                                                     ),
                                                     new Statement(
                                                         "Statement4",
                                                         new Condition(""),
-                                                        new Condition(""),
+                                                        new Condition("max(A, 0, j+1, i)"),
                                                         ";",
                                                         new Position(800, 2000)
-                                                    )
+                                                    ),                                                   
                                                 ],
+                                                
                                                 false,
                                                 new Position(800, 1600)
                                             ),
