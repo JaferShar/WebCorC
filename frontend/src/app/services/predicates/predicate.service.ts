@@ -9,6 +9,12 @@ export class PredicateService {
   private predicates: ProjectPredicate[] = [];
   constructor(private projectService: ProjectService) {
     this.predicates = projectService.getPredicates();
+    this.idCounter =
+      this.predicates
+        .map((p) => parseInt(p.id))
+        .reduce((prev, current) => {
+          return Math.max(prev, current);
+        }, 0) + 1;
   }
   private idCounter = 0;
   public getPredicates() {
@@ -17,7 +23,7 @@ export class PredicateService {
   public addPredicate() {
     const newPredicate: ProjectPredicate = {
       id: String(this.idCounter),
-      name: "untitled predicate " + this.idCounter,
+      name: "predicate " + this.idCounter,
       definition: "",
       signature: "",
     };
@@ -39,7 +45,7 @@ export class PredicateService {
   public exportPredicates(): string {
     let result = "\\predicates {\n";
     for (const predicate of this.predicates) {
-      result += `${predicate.signature};\n`;
+      result += `${predicate.name}(${this.signatureWithOnlyTypes(predicate.signature)});\n`;
     }
     result += "}\n";
     result += "\\rules {\n";
@@ -54,15 +60,41 @@ export class PredicateService {
         result += `\\schemaVar \\variable ${variable};\n`;
       });
       result += `\\find(${predicate.name}(${this.signatureWithOnlyNames(predicate.signature)}))\n`;
-      //Replace .length with length()
-      result += `\\replacewith (${predicate.definition.replace(/(?:^|\s|;|\()(\w+)\.length(?=\s|;|\)|$)/g, "length($1)")})\n`;
+      const signatureNames = this.extractNamesFromSignatureTokens(
+        signatureTokens,
+      ).filter((n) => n.length > 0);
+      const boundVarNames = this.extractNamesFromSignatureTokens(
+        notFreeVariables,
+      ).filter((n) => n.length > 0);
+      const conditions: string[] = [];
+      boundVarNames.forEach((boundVar) => {
+        signatureNames.forEach((sigVar) => {
+          conditions.push(`\\notFreeIn(${boundVar}, ${sigVar})`);
+        });
+      });
+      if (conditions.length > 0) {
+        result += `\\varcond (${conditions.join(", ")})\n`;
+      }
+      //Replace .length with length() and
+      result += `\\replacewith (${predicate.definition
+        .replace(/(?:^|\s|;|\()(\w+)\.length(?=\s|;|\+|-|\)|$)/g, "length($1)")
+        .replace(/==>/g, "->")
+        .replace(/&&/g, "&")
+        .replace(/\|\|/g, "|")
+        .replace(/==/g, "=")})\n`;
       result += "\\heuristics(simplify)\n};\n";
     }
     result += "}\n";
-    if (!this.projectService.findByUrn("/predicates.key")) {
-      this.projectService.addFile("/", "predicates", "key");
+    if (!this.projectService.findByUrn("include")) {
+      this.projectService.addDirectory("", "include");
     }
-    this.projectService.syncFileContent("/predicates.key", result);
+    if (!this.projectService.findByUrn("include/generatedPredicates.key")) {
+      this.projectService.addFile("include", "generatedPredicates", "key");
+    }
+    this.projectService.syncFileContent(
+      "include/generatedPredicates.key",
+      result,
+    );
     return result;
   }
 
@@ -92,8 +124,20 @@ export class PredicateService {
     });
   }
 
+  private extractTypesFromSignatureTokens(signatureTokens: string[]) {
+    return signatureTokens.map((expression) => {
+      return expression.split(" ").shift()?.trim() ?? expression.trim();
+    });
+  }
+
   private signatureWithOnlyNames(signature: string) {
     return this.extractNamesFromSignatureTokens(
+      this.parseSignatureTokens(signature),
+    ).reduce((prev = "", current) => prev + ", " + current);
+  }
+
+  private signatureWithOnlyTypes(signature: string) {
+    return this.extractTypesFromSignatureTokens(
       this.parseSignatureTokens(signature),
     ).reduce((prev = "", current) => prev + ", " + current);
   }

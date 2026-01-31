@@ -74,12 +74,6 @@ export class ProjectService {
       (dir: ProjectElement | undefined, part: string) => {
         if (!dir) return undefined;
         if (dir.type === "DIRECTORY") {
-          console.log(dir.urn, part);
-          console.log(
-            (dir as ProjectDirectory).contents.map(
-              (e) => e.urn.split("/").pop() + ", " + part,
-            ),
-          );
           return (dir as ProjectDirectory).contents.find(
             (element) => element.urn.split("/").pop() === part,
           ) as ProjectElement | undefined;
@@ -118,8 +112,10 @@ export class ProjectService {
     }
 
     const dir = parentDir as ProjectDirectory;
-
-    const newDir = new ProjectDirectory(parentPath + "/" + name, [], true);
+    let newDir = new ProjectDirectory(parentPath + "/" + name, [], true);
+    if (parentPath === "") {
+      newDir = new ProjectDirectory(name, [], true);
+    }
 
     if (dir.contents.find((element) => element.urn === newDir.urn)) {
       throw new Error(
@@ -280,6 +276,7 @@ export class ProjectService {
       default:
         throw new Error("Unknown file type");
     }
+    this.storage.saveProject(this._rootDir, this.projectname);
 
     this._savedFinished.next();
   }
@@ -370,7 +367,6 @@ export class ProjectService {
         this._saveNotify.next();
 
         this.editorNotify.next();
-        this.storage.clear();
         resolve();
         return;
       }
@@ -380,7 +376,6 @@ export class ProjectService {
       this.network.requestFinished
         .pipe(first())
         .subscribe(() => this.uploadFolder(this._rootDir));
-      this.storage.clear();
       resolve();
     });
   }
