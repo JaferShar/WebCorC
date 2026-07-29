@@ -417,6 +417,7 @@ export class TreeService {
     if (this.rootFormula) {
       this.rootFormula.isProven = false;
     }
+    this.propagateStateUpwards(node);
     this.refreshNodes();
   }
 
@@ -425,6 +426,36 @@ export class TreeService {
       return;
     }
     this.markSubtreeUnverified(this.rootStatementNode);
+  }
+
+  /**
+   * Recomputes the verification state of every ancestor of the given node,
+   * starting at its direct parent and walking up to the root.
+   *
+   * A statement can only stay "verified" (green) if all of its children are
+   * verified as well. If any child is "failed" (proof could not be closed),
+   * the parent becomes "failed" too. Otherwise, if any child is "unverified"
+   * (not verified yet, or something changed), the parent becomes
+   * "unverified". Parents whose children are all verified keep their own,
+   * previously determined state.
+   */
+  public propagateStateUpwards(node: AbstractStatementNode): void {
+    let current = node.parent;
+    while (current) {
+      const childStates = current.children
+        .filter((child): child is AbstractStatementNode => !!child)
+        .map((child) => child.statement.nodeState);
+
+      if (childStates.some((state) => state === "failed")) {
+        current.statement.nodeState = "failed";
+      } else if (childStates.some((state) => state === "unverified")) {
+        current.statement.nodeState = "unverified";
+      }
+      // If all children are verified, leave the parent's own state as is -
+      // its "greenness" depends on its own last verification result too.
+
+      current = current.parent;
+    }
   }
 
   public createTempFormulaFromNode(

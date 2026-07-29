@@ -73,6 +73,15 @@ export class VerificationService {
       ) {
         (currentFormula as LocalCBCFormula).statement!.isProven = true;
         (currentFormula as LocalCBCFormula).statement!.nodeState = "verified";
+      } else if ((currentFormula as LocalCBCFormula).statement) {
+        // The overall formula could not be (fully) verified: the root must
+        // not stay green. Reflect the worst state found among the
+        // statements that were just updated.
+        (currentFormula as LocalCBCFormula).statement!.isProven = false;
+        (currentFormula as LocalCBCFormula).statement!.nodeState =
+          currentStatements.some((stmt) => stmt.nodeState === "failed")
+            ? "failed"
+            : "unverified";
       }
       this.projectService.syncLocalFileContent(urn, currentFormula);
     }
@@ -156,6 +165,9 @@ export class VerificationService {
       const node = subtreeNodes.find((n) => n.statement.id === subtreeStmt.id);
       if (node) {
         node.statement.isProven = resultStmt.isProven || false;
+        node.statement.nodeState = node.statement.isProven
+          ? "verified"
+          : "failed";
       }
     }
 
@@ -165,7 +177,13 @@ export class VerificationService {
       (formula.statement as IRootStatement).statement?.isProven
     ) {
       statementNode.statement.isProven = true;
+      statementNode.statement.nodeState = "verified";
     }
+
+    // Propagate the (possibly failed/unverified) result up to any
+    // ancestors above the verified subtree, so a failure deep in the tree
+    // is reflected all the way up to the root.
+    this.treeService.propagateStateUpwards(statementNode);
 
     // Refresh nodes to trigger UI update
     this.treeService.refreshNodes();
