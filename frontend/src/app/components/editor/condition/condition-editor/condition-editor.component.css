@@ -59,3 +59,13 @@
     gap: 1rem;
     padding-top: 1rem;
 }
+
+.condition-syntax-error {
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: #f5a623;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

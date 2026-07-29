@@ -3,7 +3,10 @@ package edu.kit.cbc.editor;
 
 import edu.kit.cbc.common.Problem;
 import edu.kit.cbc.common.corc.cbcmodel.CbCFormula;
+import edu.kit.cbc.common.corc.cbcmodel.Condition;
 import edu.kit.cbc.common.corc.codegeneration.CodeGenerator;
+import edu.kit.cbc.common.corc.parsing.ParseException;
+import edu.kit.cbc.common.error.PreExecutionError;
 import edu.kit.cbc.editor.llm.LLMClientRegistry;
 import edu.kit.cbc.editor.llm.LLMQueryDto;
 import edu.kit.cbc.editor.llm.LLMResponse;
@@ -77,6 +80,25 @@ public class EditorController {
 
         UUID jobId = orchestrator.addJob(projectId, formula, filesController);
         return HttpResponse.ok(jobId);
+    }
+
+    /**
+     * Lightweight, syntax-only check of a single JML condition string (no
+     * surrounding formula context, e.g. declared java variables, required).
+     * Intended for live feedback in the frontend while a user is editing a
+     * pre-/postcondition, without having to run a full verification.
+     */
+    @Post(uri = "/validateCondition")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public HttpResponse<?> validateCondition(@Body @Valid ValidateConditionDto dto) {
+        try {
+            Condition.fromString(dto.condition());
+            return HttpResponse.ok(Map.of("valid", true));
+        } catch (ParseException e) {
+            PreExecutionError error = PreExecutionError.fromParseException(e, "/editor/validateCondition");
+            return HttpResponse.badRequest(error);
+        }
     }
 
     @Post(uri = "/javaGen")
